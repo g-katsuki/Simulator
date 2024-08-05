@@ -1,136 +1,208 @@
-import React, { useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  FlatList,
-} from "react-native";
-import { Icon } from "react-native-elements";
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
-export default function App() {
-  const [task, setTask] = useState(""); // 新しいタスクまたは編集中のタスクのテキスト
-  const [tasks, setTasks] = useState([]); // タスクのリスト
-  const [isEditing, setIsEditing] = useState(null); // 現在編集中のタスクのID
+const initialGrid = Array.from({ length: 12 }, () => Array(6).fill(null));
+const colors = ['red', 'blue', 'green', 'yellow'];
 
-  // タスクの追加または編集
-  const handleSaveTask = () => {
-    if (!task.trim()) return;
-    if (isEditing) {
-      // タスクを編集
-      setTasks(
-        tasks.map((t) => (t.id === isEditing ? { ...t, text: task } : t))
-      );
-      setIsEditing(null);
-    } else {
-      // 新しいタスクを追加
-      const newTask = { id: Date.now().toString(), text: task };
-      setTasks([...tasks, newTask]);
+const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
+
+const Puyo = ({ color }) => (
+  <View style={[styles.puyo, { backgroundColor: color }]} />
+);
+
+const App = () => {
+  const [grid, setGrid] = useState(initialGrid);
+  const [currentPuyos, setCurrentPuyos] = useState({
+    puyo1: { color: getRandomColor(), x: 2, y: 0 },
+    puyo2: { color: getRandomColor(), x: 2, y: 1 },
+    orientation: 'vertical', // 'vertical' or 'horizontal'
+  });
+
+  const movePuyos = (dx, dy) => {
+    const newPuyo1X = currentPuyos.puyo1.x + dx;
+    const newPuyo1Y = currentPuyos.puyo1.y + dy;
+    const newPuyo2X = currentPuyos.puyo2.x + dx;
+    const newPuyo2Y = currentPuyos.puyo2.y + dy;
+
+    if (
+      newPuyo1X >= 0 && newPuyo1X < 6 && newPuyo1Y >= 0 && newPuyo1Y < 12 && !grid[newPuyo1Y][newPuyo1X] &&
+      newPuyo2X >= 0 && newPuyo2X < 6 && newPuyo2Y >= 0 && newPuyo2Y < 12 && !grid[newPuyo2Y][newPuyo2X]
+    ) {
+      setCurrentPuyos({
+        ...currentPuyos,
+        puyo1: { ...currentPuyos.puyo1, x: newPuyo1X, y: newPuyo1Y },
+        puyo2: { ...currentPuyos.puyo2, x: newPuyo2X, y: newPuyo2Y },
+      });
     }
-    setTask("");
   };
 
-  // タスクの削除
-  const handleDeleteTask = (id) => {
-    setTasks(tasks.filter((t) => t.id !== id));
+  const dropPuyos = () => {
+    let newPuyo1Y = currentPuyos.puyo1.y;
+    let newPuyo2Y = currentPuyos.puyo2.y;
+    let canDrop = true;
+
+    while (canDrop) {
+      newPuyo1Y++;
+      newPuyo2Y++;
+      if (
+        newPuyo1Y >= 12 || newPuyo2Y >= 12 ||
+        grid[newPuyo1Y] && grid[newPuyo1Y][currentPuyos.puyo1.x] ||
+        grid[newPuyo2Y] && grid[newPuyo2Y][currentPuyos.puyo2.x]
+      ) {
+        newPuyo1Y--;
+        newPuyo2Y--;
+        canDrop = false;
+      }
+    }
+
+    const newGrid = grid.map(row => [...row]);
+    newGrid[newPuyo1Y][currentPuyos.puyo1.x] = currentPuyos.puyo1.color;
+    newGrid[newPuyo2Y][currentPuyos.puyo2.x] = currentPuyos.puyo2.color;
+    setGrid(newGrid);
+    setCurrentPuyos({
+      puyo1: { color: getRandomColor(), x: 2, y: 0 },
+      puyo2: { color: getRandomColor(), x: 2, y: 1 },
+      orientation: 'vertical',
+    });
   };
 
-  // 編集モードの開始
-  const handleEditTask = (task) => {
-    setTask(task.text);
-    setIsEditing(task.id);
+  const rotatePuyos = () => {
+    const { puyo1, puyo2, orientation } = currentPuyos;
+    let newPuyo2;
+    if (orientation === 'vertical') {
+      newPuyo2 = { ...puyo2, x: puyo1.x + 1, y: puyo1.y };
+      if (newPuyo2.x < 6 && !grid[newPuyo2.y][newPuyo2.x]) {
+        setCurrentPuyos({ puyo1, puyo2: newPuyo2, orientation: 'horizontal' });
+      }
+    } else {
+      newPuyo2 = { ...puyo2, x: puyo1.x, y: puyo1.y + 1 };
+      if (newPuyo2.y < 12 && !grid[newPuyo2.y][newPuyo2.x]) {
+        setCurrentPuyos({ puyo1, puyo2: newPuyo2, orientation: 'vertical' });
+      }
+    }
   };
 
-  // タスク項目のレンダリング
-  const renderTask = ({ item }) => (
-    <View style={styles.task}>
-      <Text style={styles.taskText}>{item.text}</Text>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => handleEditTask(item)}
-        >
-          <Icon name="edit" type="material" color="#4CAF50" />
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>ぷよ通・中辛</Text>
+      </View>
+      <View style={styles.infoBox}>
+        <Text style={styles.infoText}>
+          専門スタッフがお客様のお品物を1点1点丁寧に査定いたします。まずはお気軽にご相談下さい！
+        </Text>
+      </View>
+      <View style={styles.gameContainer}>
+        <View style={styles.grid}>
+          {grid.map((row, rowIndex) => (
+            <View key={rowIndex} style={styles.row}>
+              {row.map((cell, cellIndex) => (
+                <View key={cellIndex} style={styles.cell}>
+                  {cell && <Puyo color={cell} />}
+                </View>
+              ))}
+            </View>
+          ))}
+          <View
+            style={[styles.cell, { top: currentPuyos.puyo1.y * 30, left: currentPuyos.puyo1.x * 30, position: 'absolute' }]}
+          >
+            <Puyo color={currentPuyos.puyo1.color} />
+          </View>
+          <View
+            style={[styles.cell, { top: currentPuyos.puyo2.y * 30, left: currentPuyos.puyo2.x * 30, position: 'absolute' }]}
+          >
+            <Puyo color={currentPuyos.puyo2.color} />
+          </View>
+        </View>
+        <View style={styles.nextPieces}>
+          {/* 次のピースの表示場所 */}
+        </View>
+      </View>
+      <View style={styles.controls}>
+        <TouchableOpacity style={styles.controlButton} onPress={() => movePuyos(-1, 0)}>
+          <Text>←</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => handleDeleteTask(item.id)}
-        >
-          <Icon name="delete" type="material" color="#F44336" />
+        <TouchableOpacity style={styles.controlButton} onPress={dropPuyos}>
+          <Text>↓</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.controlButton} onPress={() => movePuyos(1, 0)}>
+          <Text>→</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.controlButton} onPress={rotatePuyos}>
+          <Text>回転</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>ToDoアプリ</Text>
-      <TextInput
-        placeholder="タスクを入力"
-        style={styles.input}
-        value={task}
-        onChangeText={setTask}
-      />
-      <TouchableOpacity style={styles.saveButton} onPress={handleSaveTask}>
-        <Text style={styles.saveButtonText}>{isEditing ? "更新" : "追加"}</Text>
-      </TouchableOpacity>
-      <FlatList
-        data={tasks}
-        renderItem={renderTask}
-        keyExtractor={(item) => item.id}
-      />
-    </View>
-  );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 40,
+    backgroundColor: '#fff',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
+  header: {
+    backgroundColor: '#FF6F61',
+    padding: 10,
+    alignItems: 'center',
   },
-  input: {
+  headerText: {
+    fontSize: 18,
+    color: '#fff',
+  },
+  infoBox: {
+    backgroundColor: '#FFF8DC',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
+  },
+  infoText: {
+    fontSize: 12,
+    color: '#333',
+  },
+  gameContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    padding: 10,
+  },
+  grid: {
+    flex: 3,
+    backgroundColor: '#333',
+    marginRight: 10,
+    position: 'relative',
+    width: 180,
+    height: 360,
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  cell: {
+    width: 30,
+    height: 30,
     borderWidth: 1,
-    borderColor: "#ccceee",
+    borderColor: '#444',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  puyo: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+  },
+  nextPieces: {
+    flex: 1,
+    backgroundColor: '#f4f4f4',
+  },
+  controls: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     padding: 10,
-    marginBottom: 10,
-    borderRadius: 6,
   },
-  buttonContainer: {
-    flexDirection: "row",
-  },
-
-  deleteButton: {
-    marginLeft: 4,
-  },
-  saveButton: {
-    backgroundColor: "green",
-    padding: 10,
+  controlButton: {
+    padding: 20,
+    backgroundColor: '#f4f4f4',
     borderRadius: 5,
-    marginBottom: 20,
-  },
-  saveButtonText: {
-    color: "#fff",
-    textAlign: "center",
-  },
-  task: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-    padding: 10,
-    backgroundColor: "#eeeeee",
-    borderRadius: 5,
-  },
-  taskText: {
-    maxWidth: "80%",
-  },
-  deleteButtonText: {
-    color: "#dc3545",
   },
 });
+
+export default App;
