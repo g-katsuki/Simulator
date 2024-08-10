@@ -41,7 +41,7 @@ const usePuyos = () => {
   };
 
   const dropPuyos = () => {
-    const newGrid = grid.map(row => [...row]);
+    let newGrid = grid.map(row => [...row]);
     const { puyo1, puyo2 } = currentPuyos;
 
     if (puyo1.y < puyo2.y) {
@@ -74,25 +74,111 @@ const usePuyos = () => {
         newGrid[newPuyo2Y][puyo2.x] = puyo2.color;
     }
 
+    let chainOccurred;
+    do {
+        chainOccurred = false;
+        
+        // マッチのチェック
+        const matches = checkForMatches(newGrid);
+        
+        if (matches.length > 0) {
+            // マッチがあれば消去
+            newGrid = clearMatches(newGrid, matches);
+
+            // 消えた後の空中ぷよを落とす
+            newGrid = dropFloatingPuyos(newGrid);
+
+            // 連鎖が発生したのでフラグを立てる
+            chainOccurred = true;
+        }
+    } while (chainOccurred); // 連鎖が発生する限り繰り返す
+
+    // グリッドの更新
     setGrid(newGrid);
 
-    // 次のぷよを currentPuyos にセットし、ネクストぷよを更新
+    // currentPuyosをnextPuyos[0]で更新し、nextPuyos[1]を新しいnextPuyos[0]にする
     setCurrentPuyos({
         puyo1: { ...nextPuyos[0].puyo1, x: 2, y: 0 },
         puyo2: { ...nextPuyos[0].puyo2, x: 2, y: 1 },
         orientation: 'below',
     });
 
-    // ネクストぷよを1つ前にスライドし、新しいぷよを生成
+    // nextPuyosをスライドさせ、新しいランダムなぷよを追加
     setNextPuyos([
         nextPuyos[1],
         {
             puyo1: { color: getRandomColor(), x: 0, y: 0 },
             puyo2: { color: getRandomColor(), x: 0, y: 1 },
+            orientation: 'below',
         },
     ]);
-};
+  };
 
+  const checkForMatches = (grid) => {
+    const matches = [];
+    const visited = Array.from({ length: 12 }, () => Array(6).fill(false));
+
+    for (let y = 0; y < 12; y++) {
+        for (let x = 0; x < 6; x++) {
+            if (!visited[y][x] && grid[y][x]) {
+                const connectedPuyos = findConnectedPuyos(grid, x, y, visited);
+                if (connectedPuyos.length >= 4) {
+                    matches.push(connectedPuyos);
+                }
+            }
+        }
+    }
+    return matches;
+  };
+
+  const clearMatches = (grid, matches) => {
+    matches.forEach(group => {
+        group.forEach(({ x, y }) => {
+            grid[y][x] = null;
+        });
+    });
+    return grid;
+  };
+
+  const findConnectedPuyos = (grid, startX, startY, visited) => {
+    const stack = [{ x: startX, y: startY }];
+    const connectedPuyos = [];
+    const color = grid[startY][startX];
+
+    while (stack.length > 0) {
+        const { x, y } = stack.pop();
+
+        if (x < 0 || x >= 6 || y < 0 || y >= 12 || visited[y][x] || grid[y][x] !== color) {
+            continue;
+        }
+
+        visited[y][x] = true;
+        connectedPuyos.push({ x, y });
+
+        stack.push({ x: x + 1, y }); // 右
+        stack.push({ x: x - 1, y }); // 左
+        stack.push({ x, y: y + 1 }); // 下
+        stack.push({ x, y: y - 1 }); // 上
+    }
+
+    return connectedPuyos;
+  };
+
+  const dropFloatingPuyos = (grid) => {
+    for (let x = 0; x < 6; x++) {
+        for (let y = 10; y >= 0; y--) { // 上から順に確認
+            if (grid[y][x] && !grid[y + 1][x]) { // 現在のぷよがあって、その下が空なら
+                let newY = y;
+                while (newY < 11 && !grid[newY + 1][x]) {
+                    newY++;
+                }
+                grid[newY][x] = grid[y][x]; // 下に移動
+                grid[y][x] = null; // 元の場所を空にする
+            }
+        }
+    }
+    return grid;
+  };
 
   const rotatePuyosLeft = () => {
     const { puyo1, puyo2, orientation } = currentPuyos;
