@@ -4,13 +4,12 @@ import { initialGrid, getRandomColor } from './gridUtils';
 
 const usePuyos = () => {
   const [grid, setGrid] = useState(initialGrid);
-
+  const [history, setHistory] = useState([]);
   const [currentPuyos, setCurrentPuyos] = useState({
     puyo1: { color: getRandomColor(), x: 2, y: 0 },
     puyo2: { color: getRandomColor(), x: 2, y: 1 },
     orientation: 'below', // 'upper', 'right', 'below', 'left'
   });
-
   const [nextPuyos, setNextPuyos] = useState([
     {
       puyo1: { color: getRandomColor(), x: 0, y: 0 },
@@ -21,6 +20,20 @@ const usePuyos = () => {
       puyo2: { color: getRandomColor(), x: 0, y: 1 },
     },
   ]);
+
+  const saveHistory = () => {
+    setHistory([...history, { grid: JSON.parse(JSON.stringify(grid)), currentPuyos, nextPuyos }]);
+  };
+
+  const undoMove = () => {
+    if (history.length > 0) {
+      const previousState = history.pop();
+      setGrid(previousState.grid);
+      setCurrentPuyos(previousState.currentPuyos);
+      setNextPuyos(previousState.nextPuyos);
+      setHistory(history);
+    }
+  };
 
   const movePuyos = (dx, dy) => {
     const newPuyo1X = currentPuyos.puyo1.x + dx;
@@ -41,6 +54,7 @@ const usePuyos = () => {
   };
 
   const dropPuyos = async () => {
+    saveHistory();
     let newGrid = grid.map(row => [...row]);
     const { puyo1, puyo2 } = currentPuyos;
   
@@ -262,6 +276,7 @@ const usePuyos = () => {
     dropPuyos,
     rotatePuyosLeft,
     rotatePuyosRight,
+    undoMove,
   };
 };
 

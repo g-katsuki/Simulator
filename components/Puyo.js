@@ -8,9 +8,9 @@ const Puyo = ({ color }) => (
 
 const styles = StyleSheet.create({
   puyo: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
   },
 });
 

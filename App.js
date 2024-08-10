@@ -12,7 +12,8 @@ const App = () => {
     movePuyos,
     dropPuyos,
     rotatePuyosLeft,
-    rotatePuyosRight
+    rotatePuyosRight,
+    undoMove,
   } = usePuyos();
 
   return (
@@ -32,12 +33,12 @@ const App = () => {
             </View>
           ))}
           <View
-            style={[styles.cell, { top: currentPuyos.puyo1.y * 40, left: currentPuyos.puyo1.x * 40, position: 'absolute' }]}
+            style={[styles.cell, { top: currentPuyos.puyo1.y * 38, left: currentPuyos.puyo1.x * 38, position: 'absolute' }]}
           >
             <Puyo color={currentPuyos.puyo1.color} />
           </View>
           <View
-            style={[styles.cell, { top: currentPuyos.puyo2.y * 40, left: currentPuyos.puyo2.x * 40, position: 'absolute' }]}
+            style={[styles.cell, { top: currentPuyos.puyo2.y * 38, left: currentPuyos.puyo2.x * 38, position: 'absolute' }]}
           >
             <Puyo color={currentPuyos.puyo2.color} />
           </View>
@@ -63,6 +64,11 @@ const App = () => {
           <Text>R</Text>
         </TouchableOpacity>
       </View>
+      <View style={styles.controlsBelow}>
+        <TouchableOpacity style={styles.controlButtonBelow} onPress={undoMove}>
+          <Text>戻す</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -74,11 +80,11 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#B40404',
-    padding: 25,
+    padding: 20,
     alignItems: 'center',
   },
   headerText: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#fff',
   },
   gameContainer: {
@@ -91,36 +97,51 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
     marginRight: 10,
     position: 'relative',
-    width: 240,
-    height: 480,
+    width: 228,
+    height: 456,
   },
   row: {
     flexDirection: 'row',
   },
   cell: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     borderWidth: 1,
     borderColor: '#444',
     justifyContent: 'center',
     alignItems: 'center',
   },
   puyo: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
   },
   nextPieces: {
     flex: 1,
     backgroundColor: '#848484',
+    height: 456,
   },
   controls: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: 10,
+    bottom: 10,
   },
   controlButton: {
-    padding: 20,
+    padding: 24,
+    backgroundColor: '#D8D8D8',
+    borderRadius: 5,
+  },
+  controlsBelow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 0,
+    bottom: 0,
+    alignSelf: 'flex-start',
+    marginLeft: 20,
+  },
+  controlButtonBelow: {
+    padding: 12,
     backgroundColor: '#D8D8D8',
     borderRadius: 5,
   },
