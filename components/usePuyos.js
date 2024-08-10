@@ -35,6 +35,26 @@ const usePuyos = () => {
     }
   };
 
+  const resetGame = () => {
+    setGrid(initialGrid);
+    setCurrentPuyos({
+      puyo1: { color: getRandomColor(), x: 2, y: 0 },
+      puyo2: { color: getRandomColor(), x: 2, y: 1 },
+      orientation: 'below',
+    });
+    setNextPuyos([
+      {
+        puyo1: { color: getRandomColor(), x: 0, y: 0 },
+        puyo2: { color: getRandomColor(), x: 0, y: 1 },
+      },
+      {
+        puyo1: { color: getRandomColor(), x: 0, y: 0 },
+        puyo2: { color: getRandomColor(), x: 0, y: 1 },
+      },
+    ]);
+    setHistory([]);
+  };
+
   const movePuyos = (dx, dy) => {
     const newPuyo1X = currentPuyos.puyo1.x + dx;
     const newPuyo1Y = currentPuyos.puyo1.y + dy;
@@ -277,6 +297,7 @@ const usePuyos = () => {
     rotatePuyosLeft,
     rotatePuyosRight,
     undoMove,
+    resetGame,
   };
 };
 

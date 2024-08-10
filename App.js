@@ -14,6 +14,7 @@ const App = () => {
     rotatePuyosLeft,
     rotatePuyosRight,
     undoMove,
+    resetGame,
   } = usePuyos();
 
   return (
@@ -67,6 +68,9 @@ const App = () => {
       <View style={styles.controlsBelow}>
         <TouchableOpacity style={styles.controlButtonBelow} onPress={undoMove}>
           <Text>戻す</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.resetButton} onPress={resetGame}>
+          <Text>リセット</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -141,6 +145,12 @@ const styles = StyleSheet.create({
     marginLeft: 20,
   },
   controlButtonBelow: {
+    padding: 12,
+    backgroundColor: '#D8D8D8',
+    borderRadius: 5,
+    marginRight: 200,
+  },
+  resetButton: {
     padding: 12,
     backgroundColor: '#D8D8D8',
     borderRadius: 5,
