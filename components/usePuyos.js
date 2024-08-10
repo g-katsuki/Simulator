@@ -40,78 +40,90 @@ const usePuyos = () => {
     }
   };
 
-  const dropPuyos = () => {
+  const dropPuyos = async () => {
     let newGrid = grid.map(row => [...row]);
     const { puyo1, puyo2 } = currentPuyos;
-
+  
     if (puyo1.y < puyo2.y) {
-        // Puyo2を落とす
-        let newPuyo2Y = puyo2.y;
-        while (newPuyo2Y < 11 && !newGrid[newPuyo2Y + 1][puyo2.x]) {
-            newPuyo2Y++;
-        }
-        newGrid[newPuyo2Y][puyo2.x] = puyo2.color;
-
-        // Puyo1を落とす
-        let newPuyo1Y = puyo1.y;
-        while (newPuyo1Y < 11 && !newGrid[newPuyo1Y + 1][puyo1.x]) {
-            newPuyo1Y++;
-        }
-        newGrid[newPuyo1Y][puyo1.x] = puyo1.color;
+      // Puyo2を落とす
+      let newPuyo2Y = puyo2.y;
+      while (newPuyo2Y < 11 && !newGrid[newPuyo2Y + 1][puyo2.x]) {
+        newPuyo2Y++;
+      }
+      newGrid[newPuyo2Y][puyo2.x] = puyo2.color;
+  
+      // Puyo1を落とす
+      let newPuyo1Y = puyo1.y;
+      while (newPuyo1Y < 11 && !newGrid[newPuyo1Y + 1][puyo1.x]) {
+        newPuyo1Y++;
+      }
+      newGrid[newPuyo1Y][puyo1.x] = puyo1.color;
     } else {
-        // Puyo1を落とす
-        let newPuyo1Y = puyo1.y;
-        while (newPuyo1Y < 11 && !newGrid[newPuyo1Y + 1][puyo1.x]) {
-            newPuyo1Y++;
-        }
-        newGrid[newPuyo1Y][puyo1.x] = puyo1.color;
-
-        // Puyo2を落とす
-        let newPuyo2Y = puyo2.y;
-        while (newPuyo2Y < 11 && !newGrid[newPuyo2Y + 1][puyo2.x]) {
-            newPuyo2Y++;
-        }
-        newGrid[newPuyo2Y][puyo2.x] = puyo2.color;
+      // Puyo1を落とす
+      let newPuyo1Y = puyo1.y;
+      while (newPuyo1Y < 11 && !newGrid[newPuyo1Y + 1][puyo1.x]) {
+        newPuyo1Y++;
+      }
+      newGrid[newPuyo1Y][puyo1.x] = puyo1.color;
+  
+      // Puyo2を落とす
+      let newPuyo2Y = puyo2.y;
+      while (newPuyo2Y < 11 && !newGrid[newPuyo2Y + 1][puyo2.x]) {
+        newPuyo2Y++;
+      }
+      newGrid[newPuyo2Y][puyo2.x] = puyo2.color;
     }
-
-    let chainOccurred;
-    do {
+  
+    const processChains = async () => {
+      let chainOccurred;
+  
+      do {
         chainOccurred = false;
-        
+        setGrid(initialGrid);
+  
         // マッチのチェック
         const matches = checkForMatches(newGrid);
-        
+  
         if (matches.length > 0) {
-            // マッチがあれば消去
-            newGrid = clearMatches(newGrid, matches);
-
-            // 消えた後の空中ぷよを落とす
-            newGrid = dropFloatingPuyos(newGrid);
-
-            // 連鎖が発生したのでフラグを立てる
-            chainOccurred = true;
+          // グリッドの更新
+          setGrid(newGrid);
+  
+          // ここで一定時間待機（連鎖を視覚的に確認するため）
+          await new Promise(resolve => setTimeout(resolve, 300)); // 500ms待機
+  
+          // マッチがあれば消去
+          newGrid = clearMatches(newGrid, matches);
+  
+          // 消えた後の空中ぷよを落とす
+          newGrid = dropFloatingPuyos(newGrid);
+  
+          // 連鎖が発生したのでフラグを立てる
+          chainOccurred = true;
         }
-    } while (chainOccurred); // 連鎖が発生する限り繰り返す
+      } while (chainOccurred); // 連鎖が発生する限り繰り返す
+  
+      // グリッドの更新
+      setGrid(newGrid);
 
-    // グリッドの更新
-    setGrid(newGrid);
-
-    // currentPuyosをnextPuyos[0]で更新し、nextPuyos[1]を新しいnextPuyos[0]にする
-    setCurrentPuyos({
+      // currentPuyosをnextPuyos[0]で更新し、nextPuyos[1]を新しいnextPuyos[0]にする
+      setCurrentPuyos({
         puyo1: { ...nextPuyos[0].puyo1, x: 2, y: 0 },
         puyo2: { ...nextPuyos[0].puyo2, x: 2, y: 1 },
         orientation: 'below',
-    });
-
-    // nextPuyosをスライドさせ、新しいランダムなぷよを追加
-    setNextPuyos([
+      });
+  
+      // nextPuyosをスライドさせ、新しいランダムなぷよを追加
+      setNextPuyos([
         nextPuyos[1],
         {
-            puyo1: { color: getRandomColor(), x: 0, y: 0 },
-            puyo2: { color: getRandomColor(), x: 0, y: 1 },
-            orientation: 'below',
+          puyo1: { color: getRandomColor(), x: 0, y: 0 },
+          puyo2: { color: getRandomColor(), x: 0, y: 1 },
+          orientation: 'below',
         },
-    ]);
+      ]);
+    };
+  
+    await processChains();
   };
 
   const checkForMatches = (grid) => {

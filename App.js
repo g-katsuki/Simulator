@@ -57,10 +57,10 @@ const App = () => {
           <Text>→</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.controlButton} onPress={rotatePuyosLeft}>
-          <Text>左</Text>
+          <Text>L</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.controlButton} onPress={rotatePuyosRight}>
-          <Text>右</Text>
+          <Text>R</Text>
         </TouchableOpacity>
       </View>
     </View>
