@@ -8,5 +8,4 @@ npm start -- --reset-cache
 以降は
 npm run start
 or
-以降は
 npx expo start
